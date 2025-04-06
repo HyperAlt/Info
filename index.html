@@ -1,2 +1,271 @@
-<h1>Hello World!</h1>
-<h1>THIS WEBSITE IS IN DEVELOPMENT.</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Robux Code Generator</title>
+  <style>
+    :root {
+      --roblox-red: #e3242b;
+      --roblox-gray: #232527;
+      --roblox-light: #ffffff;
+      --roblox-dark: #1a1a1a;
+      --accent: #00d4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--roblox-gray);
+      color: var(--roblox-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: var(--roblox-dark);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      max-width: 420px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .container.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1, h2, h3 {
+      color: var(--roblox-light);
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    textarea {
+      resize: vertical;
+      height: 60px;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: black;
+      font-weight: bold;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      margin: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #code {
+      font-size: 1.6em;
+      background-color: #2e2e2e;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      text-align: center;
+      letter-spacing: 3px;
+      animation: glow 1.5s infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 8px #00d4ff; }
+      50% { box-shadow: 0 0 15px #00d4ff; }
+    }
+
+    .balance {
+      background-color: #333;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+      width: 100%;
+    }
+
+    li {
+      background-color: #2a2a2a;
+      padding: 10px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    #copied-msg, #redeem-msg {
+      font-size: 14px;
+      margin-top: 5px;
+      opacity: 0;
+      transition: 0.3s;
+      color: #00ffb7;
+    }
+
+    .show {
+      opacity: 1;
+    }
+
+    .welcome {
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="container active" id="login-screen">
+    <h2>Enter Username for Personalization</h2>
+    <input type="text" id="username" placeholder="Your username">
+    <button onclick="startLogin()">Continue</button>
+  </div>
+
+  <!-- Main App -->
+  <div class="container" id="app-screen">
+    <h1>Robux Code Generator</h1>
+    <div class="welcome" id="welcome-user"></div>
+
+    <div class="balance" onclick="handleBalanceClick()">
+      Robux: <span id="robux-balance">0</span>
+    </div>
+
+    <div id="code">Click "Generate"</div>
+
+    <button onclick="generateCode()">Generate</button>
+    <button onclick="copyCode()">Copy</button>
+    <button onclick="redeemCode()">Redeem</button>
+
+    <div id="copied-msg">Code copied!</div>
+    <div id="redeem-msg">Code redeemed!</div>
+
+    <div>
+      <h3>Generated Codes</h3>
+      <ul id="code-history"></ul>
+    </div>
+
+    <div>
+      <h3>Customize Your Robux Transactions</h3>
+      <ul id="transactions"></ul>
+      <textarea id="new-transaction" placeholder="Type a custom Robux message..."></textarea>
+      <button onclick="addTransaction()">Add Transaction</button>
+    </div>
+  </div>
+
+  <script>
+    let codeHistory = [];
+
+    function startLogin() {
+      const user = document.getElementById("username").value.trim();
+      if (user) {
+        document.getElementById("login-screen").classList.remove("active");
+        document.getElementById("app-screen").classList.add("active");
+        document.getElementById("welcome-user").innerText = `Welcome, ${user}!`;
+      } else {
+        alert("Please enter a username.");
+      }
+    }
+
+    function generateCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let code = '';
+      for (let i = 0; i < 12; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      const formatted = code.match(/.{1,4}/g).join('-');
+      document.getElementById('code').innerText = formatted;
+      codeHistory.push(formatted);
+      addToHistory(formatted);
+      hideMessages();
+    }
+
+    function addToHistory(code) {
+      const list = document.getElementById("code-history");
+      const li = document.createElement("li");
+      li.textContent = code;
+      list.prepend(li);
+    }
+
+    function copyCode() {
+      const text = document.getElementById("code").innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showTempMsg("copied-msg");
+      });
+    }
+
+    function redeemCode() {
+      const msg = document.getElementById("redeem-msg");
+      const success = Math.random() > 0.4;
+      msg.innerText = success ? "Code redeemed!" : "Invalid code.";
+      msg.classList.add("show");
+      setTimeout(() => msg.classList.remove("show"), 2000);
+    }
+
+    function showTempMsg(id) {
+      const el = document.getElementById(id);
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2000);
+    }
+
+    function hideMessages() {
+      document.getElementById('copied-msg').classList.remove("show");
+      document.getElementById('redeem-msg').classList.remove("show");
+    }
+
+    function handleBalanceClick() {
+      const confirmed = confirm("Did any of the codes work?");
+      if (confirmed) {
+        const newBalance = prompt("How much Robux do you now have?");
+        if (newBalance && !isNaN(newBalance)) {
+          document.getElementById("robux-balance").innerText = newBalance;
+          const msg = `You now have ${newBalance} Robux.`;
+          addTransaction(msg);
+        }
+      }
+    }
+
+    function addTransaction(customText) {
+      const txList = document.getElementById("transactions");
+      const text = customText || document.getElementById("new-transaction").value.trim();
+      if (text) {
+        const li = document.createElement("li");
+        li.textContent = text;
+        txList.prepend(li);
+        document.getElementById("new-transaction").value = "";
+      }
+    }
+  </script>
+</body>
+</html>
